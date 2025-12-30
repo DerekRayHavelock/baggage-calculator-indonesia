@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #c41e3a 0%, #e8384f 100%);
+            background: linear-gradient(135deg, #A23867 0%, #c24886 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -65,8 +65,8 @@
 
         select:focus, input:focus {
             outline: none;
-            border-color: #c41e3a;
-            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+            border-color: #A23867;
+            box-shadow: 0 0 0 3px rgba(162, 56, 103, 0.1);
         }
 
         .baggage-inputs {
@@ -78,7 +78,7 @@
         button {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #c41e3a 0%, #e8384f 100%);
+            background: linear-gradient(135deg, #A23867 0%, #c24886 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -91,7 +91,7 @@
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(196, 30, 58, 0.4);
+            box-shadow: 0 8px 20px rgba(162, 56, 103, 0.4);
         }
 
         button:active {
@@ -202,15 +202,6 @@
             </select>
         </div>
 
-        <div class="form-group" id="ticketDateGroup" style="display: none;">
-            <label for="ticketDate">Ticket Purchase Date (Lion Air only)</label>
-            <select id="ticketDate">
-                <option value="">Choose ticket date...</option>
-                <option value="before">Before July 17, 2025 (15-20kg free)</option>
-                <option value="after">On/After July 17, 2025 (10kg free)</option>
-            </select>
-        </div>
-
         <div class="form-group" id="aircraftGroup" style="display: none;">
             <label for="aircraft">Select Aircraft Type (Citilink only)</label>
             <select id="aircraft">
@@ -249,7 +240,7 @@
             <strong>💡 Pro Tips:</strong><br>
             • Pre-purchase baggage to save 30-70% vs airport rates<br>
             • ALL airlines use 7kg cabin limit (strictly enforced)<br>
-            • Lion Air changed to 10kg free on July 17, 2025<br>
+            • Lion Air now gives 10kg free (changed July 2025)<br>
             • Wings Air has 0kg free - must pre-purchase 6+ hours before<br>
             • Maximum 32kg per individual checked bag
         </div>
@@ -260,12 +251,9 @@
             lionair: {
                 name: "Lion Air",
                 cabinLimit: 7,
-                ticketDateRequired: true,
                 fares: {
-                    before_economy: { name: "Economy (15-20kg depending on route)", checked: 15, cabin: 7 },
-                    before_business: { name: "Business Class (30kg)", checked: 30, cabin: 7 },
-                    after_economy: { name: "Economy (10kg - NEW July 2025)", checked: 10, cabin: 7 },
-                    after_business: { name: "Business Class (30kg)", checked: 30, cabin: 7 }
+                    economy: { name: "Economy (10kg)", checked: 10, cabin: 7 },
+                    business: { name: "Business Class (30kg)", checked: 30, cabin: 7 }
                 },
                 prepaidFees: {
                     kg5: 42000,
@@ -274,7 +262,7 @@
                     kg20: 165000
                 },
                 currency: "IDR",
-                note: "Largest carrier, July 2025 reduction to 10kg"
+                note: "Current policy: 10kg free (changed July 2025)"
             },
             citilink: {
                 name: "Citilink",
@@ -339,26 +327,20 @@
 
         document.getElementById('airline').addEventListener('change', function() {
             const airline = this.value;
-            const ticketDateGroup = document.getElementById('ticketDateGroup');
             const aircraftGroup = document.getElementById('aircraftGroup');
             const fareTypeGroup = document.getElementById('fareTypeGroup');
             const fareTypeSelect = document.getElementById('fareType');
-            const ticketDateSelect = document.getElementById('ticketDate');
             const aircraftSelect = document.getElementById('aircraft');
             const results = document.getElementById('results');
             
             // Reset all
-            ticketDateGroup.style.display = 'none';
             aircraftGroup.style.display = 'none';
             fareTypeGroup.style.display = 'none';
             fareTypeSelect.innerHTML = '<option value="">Choose your fare type...</option>';
-            ticketDateSelect.value = '';
             aircraftSelect.value = '';
             results.classList.remove('show');
             
-            if (airline === 'lionair') {
-                ticketDateGroup.style.display = 'block';
-            } else if (airline === 'citilink') {
+            if (airline === 'citilink') {
                 aircraftGroup.style.display = 'block';
             } else if (airline && airlineData[airline]) {
                 fareTypeGroup.style.display = 'block';
@@ -368,29 +350,6 @@
                     option.value = key;
                     option.textContent = fare.name;
                     fareTypeSelect.appendChild(option);
-                }
-            }
-        });
-
-        document.getElementById('ticketDate').addEventListener('change', function() {
-            const ticketDate = this.value;
-            const fareTypeGroup = document.getElementById('fareTypeGroup');
-            const fareTypeSelect = document.getElementById('fareType');
-            const results = document.getElementById('results');
-            
-            fareTypeGroup.style.display = ticketDate ? 'block' : 'none';
-            fareTypeSelect.innerHTML = '<option value="">Choose your fare type...</option>';
-            results.classList.remove('show');
-            
-            if (ticketDate) {
-                const fares = airlineData.lionair.fares;
-                for (const [key, fare] of Object.entries(fares)) {
-                    if (key.startsWith(ticketDate)) {
-                        const option = document.createElement('option');
-                        option.value = key;
-                        option.textContent = fare.name;
-                        fareTypeSelect.appendChild(option);
-                    }
                 }
             }
         });
@@ -418,7 +377,6 @@
 
         function calculate() {
             const airlineCode = document.getElementById('airline').value;
-            const ticketDate = document.getElementById('ticketDate').value;
             const aircraftType = document.getElementById('aircraft').value;
             const fareCode = document.getElementById('fareType').value;
             const cabinWeight = parseFloat(document.getElementById('cabin').value);
@@ -426,11 +384,6 @@
             
             if (!airlineCode) {
                 alert('Please select an airline');
-                return;
-            }
-            
-            if (airlineCode === 'lionair' && !ticketDate) {
-                alert('Please select ticket purchase date for Lion Air');
                 return;
             }
             
@@ -452,9 +405,7 @@
             const airline = airlineData[airlineCode];
             let fare;
             
-            if (airlineCode === 'lionair') {
-                fare = airline.fares[fareCode];
-            } else if (airlineCode === 'citilink') {
+            if (airlineCode === 'citilink') {
                 fare = airline.aircraft[aircraftType].fares[fareCode];
             } else {
                 fare = airline.fares[fareCode];
@@ -632,17 +583,6 @@
             }
             
             // Airline-specific notes
-            if (airlineCode === 'lionair' && ticketDate === 'after') {
-                resultsHTML += `
-                    <div class="result-item" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
-                        <div class="result-title">📅 Lion Air Policy Change - July 17, 2025</div>
-                        <div class="result-detail">
-                            Free checked baggage reduced from 15-20kg to 10kg. Tickets purchased before July 17, 2025 still get old allowance.
-                        </div>
-                    </div>
-                `;
-            }
-            
             if (airlineCode === 'batik' && fareCode === 'supersaver') {
                 resultsHTML += `
                     <div class="result-item" style="background: #fee2e2; border-left: 4px solid #dc2626;">
