@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indonesia Domestic Flight Baggage Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #c41e3a 0%, #e8384f 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #c41e3a;
+            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+        }
+
+        .baggage-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #c41e3a 0%, #e8384f 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 24px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(196, 30, 58, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 32px;
+            padding: 24px;
+            border-radius: 12px;
+            background: #f7fafc;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-item {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-item.success {
+            background: #c6f6d5;
+            border-left: 4px solid #38a169;
+        }
+
+        .result-item.warning {
+            background: #fed7d7;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .result-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .result-detail {
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .info-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        .beta-badge {
+            display: inline-block;
+            background: #fbbf24;
+            color: #78350f;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .baggage-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇮🇩 Indonesia Domestic Flight Baggage Calculator <span class="beta-badge">BETA</span></h1>
+        <p class="subtitle">Check your baggage allowance before you pack • Save money on excess fees</p>
+
+        <div class="form-group">
+            <label for="airline">Select Airline</label>
+            <select id="airline">
+                <option value="">Choose your airline...</option>
+                <option value="lionair">Lion Air</option>
+                <option value="citilink">Citilink</option>
+                <option value="batik">Batik Air</option>
+                <option value="garuda">Garuda Indonesia</option>
+                <option value="wings">Wings Air</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="ticketDateGroup" style="display: none;">
+            <label for="ticketDate">Ticket Purchase Date (Lion Air only)</label>
+            <select id="ticketDate">
+                <option value="">Choose ticket date...</option>
+                <option value="before">Before July 17, 2025 (15-20kg free)</option>
+                <option value="after">On/After July 17, 2025 (10kg free)</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="aircraftGroup" style="display: none;">
+            <label for="aircraft">Select Aircraft Type (Citilink only)</label>
+            <select id="aircraft">
+                <option value="">Choose aircraft type...</option>
+                <option value="airbus">Airbus A320 (20kg FREE)</option>
+                <option value="atr">ATR 72-600 Turboprop (10kg FREE)</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="fareTypeGroup" style="display: none;">
+            <label for="fareType">Select Fare Type</label>
+            <select id="fareType">
+                <option value="">Choose your fare type...</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Baggage Weights (in kilograms)</label>
+            <div class="baggage-inputs">
+                <div>
+                    <label for="cabin" style="font-weight: 400; font-size: 13px; color: #718096;">Cabin Baggage (kg)</label>
+                    <input type="number" id="cabin" step="0.1" min="0" max="50" placeholder="e.g., 6.5">
+                </div>
+                <div>
+                    <label for="checked" style="font-weight: 400; font-size: 13px; color: #718096;">Checked Baggage (kg)</label>
+                    <input type="number" id="checked" step="0.1" min="0" max="100" placeholder="e.g., 18.0">
+                </div>
+            </div>
+        </div>
+
+        <button onclick="calculate()">Calculate Baggage Allowance</button>
+
+        <div class="results" id="results"></div>
+
+        <div class="info-box">
+            <strong>💡 Pro Tips:</strong><br>
+            • Pre-purchase baggage to save 30-70% vs airport rates<br>
+            • ALL airlines use 7kg cabin limit (strictly enforced)<br>
+            • Lion Air changed to 10kg free on July 17, 2025<br>
+            • Wings Air has 0kg free - must pre-purchase 6+ hours before<br>
+            • Maximum 32kg per individual checked bag
+        </div>
+    </div>
+
+    <script>
+        const airlineData = {
+            lionair: {
+                name: "Lion Air",
+                cabinLimit: 7,
+                ticketDateRequired: true,
+                fares: {
+                    before_economy: { name: "Economy (15-20kg depending on route)", checked: 15, cabin: 7 },
+                    before_business: { name: "Business Class (30kg)", checked: 30, cabin: 7 },
+                    after_economy: { name: "Economy (10kg - NEW July 2025)", checked: 10, cabin: 7 },
+                    after_business: { name: "Business Class (30kg)", checked: 30, cabin: 7 }
+                },
+                prepaidFees: {
+                    kg5: 42000,
+                    kg10: 83000,
+                    kg15: 124000,
+                    kg20: 165000
+                },
+                currency: "IDR",
+                note: "Largest carrier, July 2025 reduction to 10kg"
+            },
+            citilink: {
+                name: "Citilink",
+                cabinLimit: 7,
+                aircraftRequired: true,
+                aircraft: {
+                    airbus: {
+                        fares: {
+                            economy: { name: "All Fares (20kg FREE promo)", checked: 20, cabin: 7 }
+                        }
+                    },
+                    atr: {
+                        fares: {
+                            economy: { name: "All Fares (10kg FREE promo)", checked: 10, cabin: 7 }
+                        }
+                    }
+                },
+                gateFee: 250000,
+                currency: "IDR",
+                note: "Aircraft type matters - A320 vs ATR"
+            },
+            batik: {
+                name: "Batik Air",
+                cabinLimit: 7,
+                fares: {
+                    supersaver: { name: "Super Saver (0kg - NEW June 2024)", checked: 0, cabin: 7, class: "economy" },
+                    value: { name: "Economy Value/Standard (20kg)", checked: 20, cabin: 7, class: "economy" },
+                    business: { name: "Business Class (30kg)", checked: 30, cabin: 10, class: "business" }
+                },
+                excessFeeMin: 25000,
+                excessFeeMax: 196000,
+                excessFeeAvg: 50000,
+                currency: "IDR",
+                note: "Super Saver looks full-service but includes 0kg"
+            },
+            garuda: {
+                name: "Garuda Indonesia",
+                cabinLimit: 7,
+                fares: {
+                    economy: { name: "Economy Class (20kg)", checked: 20, cabin: 7, class: "economy" },
+                    business: { name: "Business Class (30kg)", checked: 30, cabin: 7, class: "business" },
+                    first: { name: "First Class (40kg)", checked: 40, cabin: 7, class: "first" }
+                },
+                excessFee: "Variable by route",
+                currency: "IDR",
+                note: "Flag carrier, GFF members get extra allowance"
+            },
+            wings: {
+                name: "Wings Air",
+                cabinLimit: 7,
+                fares: {
+                    standard: { name: "Standard Fare (0kg - must pre-purchase)", checked: 0, cabin: 7 }
+                },
+                prepaidRate: 25000,
+                excessRateMin: 31000,
+                excessRateMax: 65000,
+                prepaidDeadline: "6 hours before departure",
+                currency: "IDR",
+                note: "Most restrictive - 0kg free, smallest cabin size"
+            }
+        };
+
+        document.getElementById('airline').addEventListener('change', function() {
+            const airline = this.value;
+            const ticketDateGroup = document.getElementById('ticketDateGroup');
+            const aircraftGroup = document.getElementById('aircraftGroup');
+            const fareTypeGroup = document.getElementById('fareTypeGroup');
+            const fareTypeSelect = document.getElementById('fareType');
+            const ticketDateSelect = document.getElementById('ticketDate');
+            const aircraftSelect = document.getElementById('aircraft');
+            const results = document.getElementById('results');
+            
+            // Reset all
+            ticketDateGroup.style.display = 'none';
+            aircraftGroup.style.display = 'none';
+            fareTypeGroup.style.display = 'none';
+            fareTypeSelect.innerHTML = '<option value="">Choose your fare type...</option>';
+            ticketDateSelect.value = '';
+            aircraftSelect.value = '';
+            results.classList.remove('show');
+            
+            if (airline === 'lionair') {
+                ticketDateGroup.style.display = 'block';
+            } else if (airline === 'citilink') {
+                aircraftGroup.style.display = 'block';
+            } else if (airline && airlineData[airline]) {
+                fareTypeGroup.style.display = 'block';
+                const fares = airlineData[airline].fares;
+                for (const [key, fare] of Object.entries(fares)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = fare.name;
+                    fareTypeSelect.appendChild(option);
+                }
+            }
+        });
+
+        document.getElementById('ticketDate').addEventListener('change', function() {
+            const ticketDate = this.value;
+            const fareTypeGroup = document.getElementById('fareTypeGroup');
+            const fareTypeSelect = document.getElementById('fareType');
+            const results = document.getElementById('results');
+            
+            fareTypeGroup.style.display = ticketDate ? 'block' : 'none';
+            fareTypeSelect.innerHTML = '<option value="">Choose your fare type...</option>';
+            results.classList.remove('show');
+            
+            if (ticketDate) {
+                const fares = airlineData.lionair.fares;
+                for (const [key, fare] of Object.entries(fares)) {
+                    if (key.startsWith(ticketDate)) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = fare.name;
+                        fareTypeSelect.appendChild(option);
+                    }
+                }
+            }
+        });
+
+        document.getElementById('aircraft').addEventListener('change', function() {
+            const aircraft = this.value;
+            const fareTypeGroup = document.getElementById('fareTypeGroup');
+            const fareTypeSelect = document.getElementById('fareType');
+            const results = document.getElementById('results');
+            
+            fareTypeGroup.style.display = aircraft ? 'block' : 'none';
+            fareTypeSelect.innerHTML = '<option value="">Choose your fare type...</option>';
+            results.classList.remove('show');
+            
+            if (aircraft) {
+                const fares = airlineData.citilink.aircraft[aircraft].fares;
+                for (const [key, fare] of Object.entries(fares)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = fare.name;
+                    fareTypeSelect.appendChild(option);
+                }
+            }
+        });
+
+        function calculate() {
+            const airlineCode = document.getElementById('airline').value;
+            const ticketDate = document.getElementById('ticketDate').value;
+            const aircraftType = document.getElementById('aircraft').value;
+            const fareCode = document.getElementById('fareType').value;
+            const cabinWeight = parseFloat(document.getElementById('cabin').value);
+            const checkedWeight = parseFloat(document.getElementById('checked').value);
+            
+            if (!airlineCode) {
+                alert('Please select an airline');
+                return;
+            }
+            
+            if (airlineCode === 'lionair' && !ticketDate) {
+                alert('Please select ticket purchase date for Lion Air');
+                return;
+            }
+            
+            if (airlineCode === 'citilink' && !aircraftType) {
+                alert('Please select aircraft type for Citilink');
+                return;
+            }
+            
+            if (!fareCode) {
+                alert('Please select a fare type');
+                return;
+            }
+            
+            if (isNaN(cabinWeight) || isNaN(checkedWeight)) {
+                alert('Please enter valid numbers for baggage weights');
+                return;
+            }
+            
+            const airline = airlineData[airlineCode];
+            let fare;
+            
+            if (airlineCode === 'lionair') {
+                fare = airline.fares[fareCode];
+            } else if (airlineCode === 'citilink') {
+                fare = airline.aircraft[aircraftType].fares[fareCode];
+            } else {
+                fare = airline.fares[fareCode];
+            }
+            
+            const cabinAllowed = fare.cabin;
+            const checkedAllowed = fare.checked;
+            
+            const cabinOver = Math.max(0, cabinWeight - cabinAllowed);
+            const checkedOver = Math.max(0, checkedWeight - checkedAllowed);
+            
+            let resultsHTML = '';
+            
+            // Cabin baggage result
+            if (cabinOver === 0) {
+                resultsHTML += `
+                    <div class="result-item success">
+                        <div class="result-title">✅ Cabin Baggage: Within Limits</div>
+                        <div class="result-detail">
+                            Your cabin baggage (<span class="highlight">${cabinWeight} kg</span>) is within the 
+                            <span class="highlight">${cabinAllowed} kg</span> limit. You're good to go!
+                        </div>
+                    </div>
+                `;
+            } else {
+                let cabinFeeInfo = '';
+                if (airlineCode === 'lionair') {
+                    cabinFeeInfo = `<br><br><strong>⚠️ Gate enforcement:</strong> Lion Air weighs at check-in and gates. Additional fees apply if overweight.`;
+                } else if (airlineCode === 'citilink') {
+                    cabinFeeInfo = `<br><br><strong>Gate Sweeping Fee:</strong> ${airline.currency} ${airline.gateFee.toLocaleString()} per piece if over limit at boarding gate.`;
+                } else if (airlineCode === 'wings') {
+                    cabinFeeInfo = `<br><br><strong>⚠️ STRICT enforcement:</strong> Wings Air operates small turboprops with tiny overhead bins. Cabin limits strictly enforced.`;
+                } else {
+                    cabinFeeInfo = `<br><br><strong>⚠️ Enforcement:</strong> You'll need to check this bag or remove items. Most airlines strictly enforce the 7kg limit.`;
+                }
+                
+                resultsHTML += `
+                    <div class="result-item warning">
+                        <div class="result-title">⚠️ Cabin Baggage: Over Limit</div>
+                        <div class="result-detail">
+                            Your cabin baggage (<span class="highlight">${cabinWeight} kg</span>) exceeds the 
+                            <span class="highlight">${cabinAllowed} kg</span> limit by <span class="highlight">${cabinOver.toFixed(1)} kg</span>.
+                            ${cabinFeeInfo}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Checked baggage result
+            if (checkedAllowed === 0) {
+                if (checkedWeight > 0) {
+                    let feeInfo = '';
+                    if (airlineCode === 'lionair') {
+                        const prepaid10 = airline.prepaidFees.kg10;
+                        const prepaid15 = airline.prepaidFees.kg15;
+                        const prepaid20 = airline.prepaidFees.kg20;
+                        feeInfo = `
+                            <strong>Pre-purchase options (at booking):</strong><br>
+                            • 10kg: <span class="highlight">${airline.currency} ${prepaid10.toLocaleString()}</span><br>
+                            • 15kg: <span class="highlight">${airline.currency} ${prepaid15.toLocaleString()}</span><br>
+                            • 20kg: <span class="highlight">${airline.currency} ${prepaid20.toLocaleString()}</span><br>
+                            💰 <strong>Airport rates 2-3x higher! Pre-purchase saves 50-70%!</strong>
+                        `;
+                    } else if (airlineCode === 'batik') {
+                        feeInfo = `
+                            <strong>Options:</strong><br>
+                            • Pre-purchase online: DISCOUNTED rate<br>
+                            • At airport: ${airline.currency} ${airline.excessFeeAvg.toLocaleString()}/kg average (varies ${airline.excessFeeMin.toLocaleString()}-${airline.excessFeeMax.toLocaleString()}/kg by route)<br>
+                            💡 <strong>Tip:</strong> Economy Value/Standard includes 20kg - consider upgrading from Super Saver.
+                        `;
+                    } else if (airlineCode === 'wings') {
+                        const kgsNeeded = Math.ceil(checkedWeight);
+                        const prepaidCost = kgsNeeded * airline.prepaidRate;
+                        const excessAvg = kgsNeeded * ((airline.excessRateMin + airline.excessRateMax) / 2);
+                        feeInfo = `
+                            <strong>You need ${kgsNeeded} kg:</strong><br>
+                            • Pre-purchase online (REQUIRED, ${airline.prepaidDeadline}): approximately <span class="highlight">${airline.currency} ${prepaidCost.toLocaleString()}</span> (${airline.currency} ${airline.prepaidRate.toLocaleString()}/kg)<br>
+                            • At airport: ${airline.currency} ${airline.excessRateMin.toLocaleString()}-${airline.excessRateMax.toLocaleString()}/kg if allowed<br>
+                            ⚠️ <strong>CRITICAL: Must pre-purchase at least 6 hours before departure. Cannot buy at airport in most cases!</strong>
+                        `;
+                    }
+                    
+                    resultsHTML += `
+                        <div class="result-item warning">
+                            <div class="result-title">⚠️ Checked Baggage: No Allowance Included</div>
+                            <div class="result-detail">
+                                Your fare (<span class="highlight">${fare.name}</span>) includes <span class="highlight">NO free checked baggage</span>.<br>
+                                You have <span class="highlight">${checkedWeight} kg</span> to check in.<br><br>
+                                ${feeInfo}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultsHTML += `
+                        <div class="result-item success">
+                            <div class="result-title">✅ Checked Baggage: No Bag to Check</div>
+                            <div class="result-detail">
+                                Your fare (<span class="highlight">${fare.name}</span>) includes no free checked baggage, but you're not checking any bags. Perfect!
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                if (checkedOver === 0) {
+                    resultsHTML += `
+                        <div class="result-item success">
+                            <div class="result-title">✅ Checked Baggage: Within Limits</div>
+                            <div class="result-detail">
+                                Your checked baggage (<span class="highlight">${checkedWeight} kg</span>) is within your 
+                                <span class="highlight">${checkedAllowed} kg</span> allowance. No excess fees!
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    let excessInfo = '';
+                    if (airlineCode === 'lionair') {
+                        const kgsNeeded = Math.ceil(checkedOver);
+                        excessInfo = `
+                            <strong>You need ${kgsNeeded} kg more:</strong><br>
+                            • Pre-purchase packages at booking: CHEAPEST option<br>
+                            • After booking: 30-50% more expensive<br>
+                            • At airport: 2-3x online rates<br>
+                            💡 <strong>Example: 10kg costs ${airline.currency} ${airline.prepaidFees.kg10.toLocaleString()} online vs ${airline.currency} ${(airline.prepaidFees.kg10 * 2.5).toLocaleString()} at airport!</strong>
+                        `;
+                    } else if (airlineCode === 'citilink') {
+                        excessInfo = `
+                            <strong>You're ${checkedOver.toFixed(1)} kg over:</strong><br>
+                            • Pre-book packages (5, 10, 20, 30, 40kg) up to 4 hours before departure<br>
+                            • Cheaper than paying excess at airport<br>
+                            💡 <strong>LinkSport members get 20kg sports baggage benefit!</strong>
+                        `;
+                    } else if (airlineCode === 'batik') {
+                        const excessCostAvg = Math.ceil(checkedOver) * airline.excessFeeAvg;
+                        excessInfo = `
+                            <strong>You're ${checkedOver.toFixed(1)} kg over:</strong><br>
+                            • At airport: approximately <span class="highlight">${airline.currency} ${excessCostAvg.toLocaleString()}</span> (${airline.currency} ${airline.excessFeeAvg.toLocaleString()}/kg average)<br>
+                            • Pre-purchase online: Discounted rate available<br>
+                            💡 <strong>Weight concept: Can split across multiple bags!</strong>
+                        `;
+                    } else if (airlineCode === 'garuda') {
+                        excessInfo = `
+                            <strong>You're ${checkedOver.toFixed(1)} kg over:</strong><br>
+                            • Excess rates vary by route - contact airline<br>
+                            • Pre-paid excess saves 10% vs airport<br>
+                            • Purchase online or via call center: (62-21) 23519999<br>
+                            💡 <strong>GFF members get extra allowance: Silver +5kg, Gold +15kg, Platinum +20kg!</strong>
+                        `;
+                    }
+                    
+                    resultsHTML += `
+                        <div class="result-item warning">
+                            <div class="result-title">⚠️ Checked Baggage: Over Limit</div>
+                            <div class="result-detail">
+                                Your checked baggage (<span class="highlight">${checkedWeight} kg</span>) exceeds your 
+                                <span class="highlight">${checkedAllowed} kg</span> allowance by <span class="highlight">${checkedOver.toFixed(1)} kg</span>.<br><br>
+                                ${excessInfo}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Weight limit warning
+            if (checkedWeight > 32) {
+                resultsHTML += `
+                    <div class="result-item warning">
+                        <div class="result-title">⚠️ Weight Limit Exceeded</div>
+                        <div class="result-detail">
+                            Your bag weighs <span class="highlight">${checkedWeight} kg</span>, but the maximum weight per individual bag is 
+                            <span class="highlight">32 kg</span> for safety reasons (all Indonesian airlines).<br>
+                            You MUST split this into multiple bags.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Airline-specific notes
+            if (airlineCode === 'lionair' && ticketDate === 'after') {
+                resultsHTML += `
+                    <div class="result-item" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+                        <div class="result-title">📅 Lion Air Policy Change - July 17, 2025</div>
+                        <div class="result-detail">
+                            Free checked baggage reduced from 15-20kg to 10kg. Tickets purchased before July 17, 2025 still get old allowance.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (airlineCode === 'batik' && fareCode === 'supersaver') {
+                resultsHTML += `
+                    <div class="result-item" style="background: #fee2e2; border-left: 4px solid #dc2626;">
+                        <div class="result-title">⚠️ Super Saver = Zero Baggage</div>
+                        <div class="result-detail">
+                            Batik Air's Super Saver (launched June 2024) looks like full-service but includes 0kg checked baggage. Always verify fare type!
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (airlineCode === 'citilink' && aircraftType === 'airbus') {
+                resultsHTML += `
+                    <div class="result-item" style="background: #d1fae5; border-left: 4px solid #059669;">
+                        <div class="result-title">✨ Citilink FREE Baggage Promo!</div>
+                        <div class="result-detail">
+                            All Citilink domestic fares include FREE checked baggage (20kg on Airbus A320). Best value among Indonesian carriers!
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (airlineCode === 'wings') {
+                resultsHTML += `
+                    <div class="result-item" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+                        <div class="result-title">⚠️ Wings Air - Zero Free Baggage</div>
+                        <div class="result-detail">
+                            Most restrictive policy in Indonesia: 0kg free, must pre-purchase at least 6 hours before departure, smallest cabin dimensions (35x30x20cm). Perfect for ultra-light travelers only.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (airlineCode === 'garuda') {
+                resultsHTML += `
+                    <div class="result-item" style="background: #e0e7ff; border-left: 4px solid #6366f1;">
+                        <div class="result-title">✈️ Garuda Indonesia - Premium Service</div>
+                        <div class="result-detail">
+                            Flag carrier with generous allowances and full-service benefits. Sports equipment gets FREE 23kg separate allowance (must declare in advance).
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('results').innerHTML = resultsHTML;
+            document.getElementById('results').classList.add('show');
+        }
+    </script>
+</body>
+</html>
